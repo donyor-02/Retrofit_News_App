@@ -36,6 +36,13 @@ class MainActivity : AppCompatActivity() {
         makeApiReqiest()
     }
 
+    private fun fadefromblack(){
+        v_blackScreen.animate().apply {
+            alpha(0f)
+            duration = 3000
+        }.start()
+    }
+
     private fun setUpRecyclerView(){
         rv_recyclerView.layoutManager = LinearLayoutManager(applicationContext)
         rv_recyclerView.adapter = RecyclerAdapter(titlesList,descList,imagesList,linksList)
@@ -49,6 +56,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun makeApiReqiest(){
+
+        progressBar.visibility = View.VISIBLE
+
         val api = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
@@ -64,14 +74,32 @@ class MainActivity : AppCompatActivity() {
 
                     withContext(Dispatchers.Main){
                         setUpRecyclerView()
-                        //v_blackScreen.visibility = View.GONE
+                        fadefromblack()
                         progressBar.visibility = View.GONE
                     }
             }
             catch (e: Exception){
                 Log.d("MainActivity",e.toString())
+
+                withContext(Dispatchers.Main){
+                    attemptRequestAgain()
+                }
             }
         }
+    }
+
+    private fun attemptRequestAgain() {
+        countDownTimer = object : CountDownTimer(5*1000,1000){
+            override fun onTick(millisUntilFinished: Long) {
+                Log.d("MainActivity","Could not retrive data... Try again ${millisUntilFinished/100} second")
+            }
+
+            override fun onFinish() {
+                makeApiReqiest()
+                countDownTimer.cancel()
+            }
+        }
+        countDownTimer.start()
     }
 
 }
